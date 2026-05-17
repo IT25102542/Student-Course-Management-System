@@ -30,4 +30,15 @@ public class AdminController {
     public AuthResponse login(@RequestBody AdminLoginRequest request) {
         return adminService.login(request);
     }
+
+    @GetMapping
+    public List<Admin> getAllAdmins() {
+        return adminService.getAllAdmins();
+    }
+
+    //for update Admin
+    @PutMapping("/{id}")
+    public Admin updateAdmin(@PathVariable Long id, @RequestBody Admin admin) {
+        return adminService.updateAdmin(id, admin);
+    }
 }
