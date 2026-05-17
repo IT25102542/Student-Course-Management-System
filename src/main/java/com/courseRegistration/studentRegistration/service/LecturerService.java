@@ -1,5 +1,23 @@
 package com.courseRegistration.studentRegistration.service;
 
+import com.courseRegistration.studentRegistration.dto.AuthResponse;
+import com.courseRegistration.studentRegistration.dto.LecturerCourseDTO;
+import com.courseRegistration.studentRegistration.dto.LecturerDashboardDTO;
+import com.courseRegistration.studentRegistration.dto.LecturerLoginRequest;
+import com.courseRegistration.studentRegistration.dto.LecturerProfileUpdateRequest;
+import com.courseRegistration.studentRegistration.dto.LecturerRegistrationRequest;
+import com.courseRegistration.studentRegistration.dto.LecturerStudentDTO;
+import com.courseRegistration.studentRegistration.exception.ApiException;
+import com.courseRegistration.studentRegistration.model.Course;
+import com.courseRegistration.studentRegistration.model.Enrollment;
+import com.courseRegistration.studentRegistration.model.Lecturer;
+import com.courseRegistration.studentRegistration.repository.AdminRepository;
+import com.courseRegistration.studentRegistration.repository.CourseRepository;
+import com.courseRegistration.studentRegistration.repository.EnrollmentRepository;
+import com.courseRegistration.studentRegistration.repository.LecturerRepository;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 
 @Service
 public class LecturerService {
@@ -148,6 +166,4 @@ public class LecturerService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Password must be at least 6 characters");
         }
     }
-
-
 }
