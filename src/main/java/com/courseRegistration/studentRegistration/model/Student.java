@@ -1,93 +1,53 @@
 package com.courseRegistration.studentRegistration.model;
 
+import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import org.springframework.http.converter.json.GsonBuilderUtils;
 
 @Entity
 @Table(name = "students")
-public class Student {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
-    private String fullName;
-
-    @Column(nullable = false, unique = true)
-    private String email;
-
-    @Column(nullable = false)
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private String password;
+public class Student extends BaseUser {  // EXTENDS BaseUser
 
     private String phoneNumber;
-
     private int age;
 
+    @Column(unique = true, nullable = false)
+    private String studentId;
+
     public Student() {
+        super();
     }
 
-    public Student(String fullName, String email, String password, String phoneNumber, int age) {
-        this.fullName = fullName;
-        this.email = email;
-        this.password = password;
+    public Student(String name, String email, String password, String phoneNumber, int age) {
+        super(name, email, password);  // Call parent constructor
         this.phoneNumber = phoneNumber;
         this.age = age;
     }
 
-    public Long getId() {
-        return id;
+    // ===== POLYMORPHISM IMPLEMENTATION =====
+    @Override
+    public String getRole() {
+        return "STUDENT";
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    @Override
+    public String getDisplayInfo() {
+        return String.format("Student: %s (Age: %d)", getName(), age);
+    }
+    // =======================================
+
+    // Getters and Setters
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+
+
+    public String getStudentId() {
+        return studentId;
     }
 
-    public String getFullName() {
-        return fullName;
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
     }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
+    public int getAge() { return age; }
+    public void setAge(int age) { this.age = age; }
 }
