@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Coursera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#5624d0', 'deep-charcoal': '#2D2F31', 'success-green': '#1E8E3E', 'error-red': '#dc2626' },
+                    fontFamily: { sans: ['Inter'] },
+                    maxWidth: { 'container-max': '1340px' }
+                }
+            }
+        }
+    </script>
+    <style>
+        .course-card { transition: all 0.3s ease; }
+        .course-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .progress-bar { height: 4px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+        .progress-fill { height: 4px; background: #5624d0; border-radius: 999px; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #2D2F31; color: white; padding: 12px 20px; border-radius: 8px; z-index: 9999; animation: fadeInOut 3s ease-in-out; }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(20px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(20px); } }
+        .status-paid { background-color: #1E8E3E; color: white; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+        .status-refunded { background-color: #9CA3AF; color: white; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<nav class="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm">
+    <div class="max-w-container-max mx-auto px-4 md:px-6 flex justify-between items-center h-16">
+        <a href="/" class="text-2xl font-extrabold" style="color: #5624d0;">Coursera</a>
+        <div class="flex items-center gap-4">
+            <span id="studentName" class="text-gray-700 font-medium hidden md:inline"></span>
+            <button onclick="logout()" class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<main class="max-w-container-max mx-auto px-4 md:px-6 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-deep-charcoal">Welcome back, <span id="welcomeName"></span></h1>
+        <p class="text-gray-500 mt-1">Continue your learning journey</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="flex items-center justify-between">
+                <div><p class="text-gray-500 text-sm">Enrolled Courses</p><p id="courseCount" class="text-3xl font-bold text-gray-900">0</p></div>
+                <span class="material-symbols-outlined text-4xl text-primary/70">menu_book</span>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="flex items-center justify-between">
+                <div><p class="text-gray-500 text-sm">Total Spent</p><p id="totalSpent" class="text-3xl font-bold" style="color: #5624d0;">LKR 0</p></div>
+                <span class="material-symbols-outlined text-4xl text-primary/70">payments</span>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="flex items-center justify-between">
+                <div><p class="text-gray-500 text-sm">Learning Status</p><p id="learningStatus" class="text-3xl font-bold text-green-600">Active</p></div>
+                <span class="material-symbols-outlined text-4xl text-green-500">school</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Courses Section -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl md:text-2xl font-bold text-gray-900">My Courses</h2>
+            <a id="enrollNewCourseLink" href="#" class="text-sm font-semibold hover:underline" style="color: #5624d0;">+ Enroll New Course</a>
+        </div>
+        <div id="coursesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="text-center py-10 text-gray-400 col-span-full">Loading your courses...</div>
+        </div>
+    </div>
+
+    <!-- Profile & Payment Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Profile Card -->
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Profile Settings</h2>
+            <form id="profileForm" class="space-y-4">
+                <div><label class="block text-sm font-medium mb-1">Full Name</label><input type="text" id="fullName" class="w-full px-3 py-2 border rounded-lg"></div>
+                <div><label class="block text-sm font-medium mb-1">Email</label><input type="email" id="email" class="w-full px-3 py-2 border rounded-lg bg-gray-50" disabled></div>
+                <div><label class="block text-sm font-medium mb-1">Phone</label><input type="tel" id="phone" class="w-full px-3 py-2 border rounded-lg"></div>
+                <div><label class="block text-sm font-medium mb-1">New Password</label><input type="password" id="password" class="w-full px-3 py-2 border rounded-lg" placeholder="Leave blank to keep same"></div>
+                <button type="submit" class="w-full text-white py-2 rounded-lg hover:opacity-90" style="background-color: #5624d0;">Update Profile</button>
+            </form>
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <button onclick="deleteAccount()" class="w-full bg-error-red text-white py-2 rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2" style="background-color: #dc2626;">
+                    <span class="material-symbols-outlined text-sm">delete_forever</span>
+                    Delete My Account
+                </button>
+                <p class="text-xs text-gray-400 mt-2 text-center">This will cancel all your enrollments and refund payments.</p>
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Payment History</h2>
+            <div id="paymentHistory" class="space-y-3 max-h-80 overflow-y-auto">
+                <div class="text-center text-gray-400">Loading payments...</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    let studentData = null;
+    const formatMoney = (amt) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amt);
+
+    function showToast(message, isError = false) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.backgroundColor = isError ? '#dc2626' : '#2D2F31';
+        toast.innerHTML = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    async function request(path, options = {}) {
+        const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : null;
+        if (!res.ok) throw new Error(data?.message || 'Request failed');
+        return data;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
+    }
+
+    async function cancelEnrollment(enrollmentId, courseTitle) {
+        if (!confirm(`Are you sure you want to cancel "${courseTitle}"?\n\n• Within 7 days → Full refund\n• After 7 days → No refund\n\nThis cannot be undone.`)) return;
+        try {
+            const response = await fetch(`/api/enrollments/${enrollmentId}`, { method: 'DELETE' });
+            if (!response.ok) { const error = await response.json(); throw new Error(error.message); }
+            showToast(`✅ "${courseTitle}" cancelled! Refund processed.`);
+            setTimeout(() => window.location.reload(), 1500);
+        } catch (error) { showToast(error.message, true); }
+    }
+
+    async function deleteAccount() {
+        const student = JSON.parse(localStorage.getItem('studentUser'));
+        if (!student) return;
+        if (!confirm('⚠️ WARNING: This will permanently delete your account. This cannot be undone.')) return;
+        const userInput = prompt('Type "DELETE" to confirm:');
+        if (userInput !== 'DELETE') { showToast('Account deletion cancelled.', true); return; }
+        try {
+            await request(`/api/students/${student.id}`, { method: 'DELETE' });
+            localStorage.removeItem('studentUser');
+            showToast('Your account has been deleted.');
+            setTimeout(() => window.location.href = '/', 2000);
+        } catch (error) { showToast(error.message, true); }
+    }
+
+    async function loadDashboard() {
+        try {
+            const student = JSON.parse(localStorage.getItem('studentUser'));
+            if (!student) { window.location.href = '/login.html'; return; }
+            studentData = student;
+
+            // Enroll link with studentId (Idea 3)
+            document.getElementById('enrollNewCourseLink').href = `/register.html?studentId=${student.id}`;
+
+            const profile = await request(`/api/students/${student.id}`);
+            document.getElementById('studentName').innerText = escapeHtml(profile.fullName);
+            const firstName = escapeHtml(profile.fullName).split(' ')[0];
+            document.getElementById('welcomeName').innerText = firstName || 'Student';
+            document.getElementById('fullName').value = escapeHtml(profile.fullName);
+            document.getElementById('email').value = escapeHtml(profile.email);
+            document.getElementById('phone').value = escapeHtml(profile.phoneNumber || '');
+
+            const enrollments = await request(`/api/enrollments/student/${student.id}`);
+            document.getElementById('courseCount').innerText = enrollments.length;
+            const totalPaid = enrollments.reduce((sum, e) => sum + (Number(e.payment?.amount) || 0), 0);
+            document.getElementById('totalSpent').innerHTML = formatMoney(totalPaid);
+
+            const statusElem = document.getElementById('learningStatus');
+            if (statusElem) {
+                statusElem.innerText = enrollments.length > 0 ? 'Active' : 'Inactive';
+                statusElem.className = enrollments.length > 0 ? 'text-3xl font-bold text-green-600' : 'text-3xl font-bold text-gray-400';
+            }
+
+            if (enrollments.length === 0) {
+                document.getElementById('coursesList').innerHTML = '<div class="text-center py-10 text-gray-400 col-span-full">No courses enrolled yet. <a href="/register.html" class="text-primary">Enroll now</a></div>';
+            } else {
+                document.getElementById('coursesList').innerHTML = enrollments.map(e => {
+                    const course = e.course || {};
+                    const payment = e.payment || {};
+                    const enrollmentDate = new Date(e.registeredAt);
+                    const daysDiff = Math.floor((new Date() - enrollmentDate) / (1000 * 60 * 60 * 24));
+                    const canCancel = daysDiff <= 7;
+                    return `
+                        <div class="course-card bg-white border rounded-xl overflow-hidden">
+                            <div class="p-5">
+                                <span class="text-xs font-semibold" style="color: #5624d0;">${escapeHtml(course.courseCode)}</span>
+                                <h3 class="font-bold text-lg my-2">${escapeHtml(course.title)}</h3>
+                                <div class="flex justify-between items-center mt-3">
+                                    <span class="font-bold" style="color: #5624d0;">${formatMoney(payment.amount || 0)}</span>
+                                    <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">${escapeHtml(payment.status) || 'PAID'}</span>
+                                </div>
+                                <div class="text-xs text-gray-400 mt-2">Ref: ${escapeHtml(payment.transactionReference)}</div>
+                                <div class="text-xs text-gray-400 mt-1">Enrolled: ${enrollmentDate.toLocaleDateString()}</div>
+                                <div class="mt-3 flex gap-2">
+                                    ${canCancel ? `<button onclick="cancelEnrollment(${e.id}, '${escapeHtml(course.title).replace(/'/g, "\\'")}')" class="flex-1 px-3 py-1.5 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600">Cancel</button>` : `<button disabled class="flex-1 px-3 py-1.5 text-sm bg-gray-200 text-gray-500 rounded-lg cursor-not-allowed">Expired</button>`}
+                                    <a href="/receipt.html?paymentId=${payment.id}" class="flex-1 px-3 py-1.5 text-sm text-white rounded-lg text-center hover:opacity-90" style="background-color: #5624d0;">Receipt</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Payment History with Method + Status Badge + Receipt Button
+            const payments = await request(`/api/payments/student/${student.id}`);
+            if (!payments || payments.length === 0) {
+                document.getElementById('paymentHistory').innerHTML = '<div class="text-center text-gray-400">No payments yet</div>';
+            } else {
+                document.getElementById('paymentHistory').innerHTML = payments.map(p => `
+                    <div class="border rounded-lg p-3 mb-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-mono text-xs text-gray-500">${escapeHtml(p.transactionReference)}</div>
+                                <div class="text-sm font-semibold mt-1" style="color: #5624d0;">${formatMoney(p.amount || 0)}</div>
+                            </div>
+                            <a href="/receipt.html?paymentId=${p.id}" class="text-xs px-2 py-1 rounded hover:opacity-80" style="color: #5624d0;">View Receipt</a>
+                        </div>
+                        <div class="flex justify-between items-center mt-2 text-xs">
+                            <span class="text-gray-500">${escapeHtml(p.paymentMethod)}</span>
+                            <span class="${p.status === 'PAID' ? 'status-paid' : 'status-refunded'}">${p.status}</span>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">${p.paidAt ? new Date(p.paidAt).toLocaleDateString() : 'N/A'}</div>
+                    </div>
+                `).join('');
+            }
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const student = JSON.parse(localStorage.getItem('studentUser'));
+            const payload = { fullName: document.getElementById('fullName').value, phoneNumber: document.getElementById('phone').value, password: document.getElementById('password').value };
+            if (!payload.password || payload.password === '') delete payload.password;
+            await request(`/api/students/${student.id}/profile`, { method: 'PUT', body: JSON.stringify(payload) });
+            showToast('Profile updated');
+            document.getElementById('password').value = '';
+            const profile = await request(`/api/students/${student.id}`);
+            document.getElementById('studentName').innerText = escapeHtml(profile.fullName);
+            document.getElementById('welcomeName').innerText = escapeHtml(profile.fullName).split(' ')[0] || 'Student';
+        } catch (err) { showToast(err.message, true); }
+    });
+
+    function logout() { localStorage.removeItem('studentUser'); window.location.href = '/login.html'; }
+
+    const saved = localStorage.getItem('studentUser');
+    if (!saved) window.location.href = '/login.html';
+    else loadDashboard();
+</script>
+</body>
+</html>
