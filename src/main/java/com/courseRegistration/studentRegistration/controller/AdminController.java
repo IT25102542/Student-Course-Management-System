@@ -41,4 +41,11 @@ public class AdminController {
     public Admin updateAdmin(@PathVariable Long id, @RequestBody Admin admin) {
         return adminService.updateAdmin(id, admin);
     }
+
+    //for delete Admin
+    @DeleteMapping("/{id}")
+    public ApiMessage deleteAdmin(@PathVariable Long id) {
+        adminService.deleteAdmin(id);
+        return new ApiMessage("Admin deleted successfully");
+    }
 }
