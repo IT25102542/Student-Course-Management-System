@@ -56,5 +56,27 @@ public class AdminDashboardService {
                 totalRevenue, recentRegistrations, pendingTransactions
         );
     }
+
+    public List<StudentSummaryDTO> getAllStudentsSummary() {
+        return studentRepository.findAll().stream()
+                .map(student -> {
+                    List<Enrollment> studentEnrollments = enrollmentRepository.findByStudentId(student.getId());
+                    int courseCount = studentEnrollments.size();
+                    double totalPaid = studentEnrollments.stream()
+                            .map(e -> e.getPayment().getAmount())
+                            .mapToDouble(BigDecimal::doubleValue)
+                            .sum();
+
+                    return new StudentSummaryDTO(
+                            student.getId(),
+                            student.getName(),
+                            student.getEmail(),
+                            student.getPhoneNumber(),
+                            courseCount,
+                            totalPaid
+                    );
+                })
+                .collect(Collectors.toList());
+    }
 }
 
