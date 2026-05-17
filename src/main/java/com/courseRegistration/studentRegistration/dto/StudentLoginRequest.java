@@ -1,4 +1,4 @@
 package com.courseRegistration.studentRegistration.dto;
 
-public class StudentLoginRequest {
+public record StudentLoginRequest(String email, String password) {
 }
