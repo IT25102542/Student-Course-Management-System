@@ -48,7 +48,7 @@ public class PaymentService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Payment not found"));
     }
 
-    // Get all payments for a student (via enrollments)
+    // Get all payments for a student
     public List<Payment> getPaymentsByStudentId(Long studentId) {
         return paymentRepository.findPaymentsByStudentId(studentId);
     }
@@ -62,7 +62,7 @@ public class PaymentService {
         }
 
         payment.setStatus("REFUNDED");
-        // Note: In real system, you'd track refund amount, reason, etc.
+
 
         return paymentRepository.save(payment);
     }
@@ -78,7 +78,7 @@ public class PaymentService {
                 payment.getCardHolderName(),
                 payment.getStatus(),
                 payment.getPaidAt(),
-                "Course Registration Payment"
+                "Payment for Course Registration"
         );
     }
 
@@ -99,51 +99,5 @@ public class PaymentService {
     private String generateTransactionReference() {
         return "TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase()
                 + "-" + System.currentTimeMillis() % 10000;
-    }
-    // Add this method - for UPDATE Payment Status
-    public Payment updatePaymentStatus(Long id, String status) {
-        Payment payment = getPaymentById(id);
-
-        // Validate status
-        if (status == null || status.isBlank()) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Status is required");
-        }
-
-        // Allowed status values
-        String[] allowedStatuses = {"PENDING", "PAID", "FAILED", "REFUNDED", "COMPLETED", "CANCELLED"};
-        boolean isValid = false;
-        for (String allowed : allowedStatuses) {
-            if (allowed.equalsIgnoreCase(status)) {
-                status = allowed; // Use proper case
-                isValid = true;
-                break;
-            }
-        }
-
-        if (!isValid) {
-            throw new ApiException(HttpStatus.BAD_REQUEST,
-                    "Invalid status. Allowed: PENDING, PAID, FAILED, REFUNDED, COMPLETED, CANCELLED");
-        }
-
-        // Business rules for status transitions
-        String currentStatus = payment.getStatus();
-
-        // Cannot change from REFUNDED
-        if ("REFUNDED".equals(currentStatus)) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Cannot change status of refunded payment");
-        }
-
-        // Cannot change from COMPLETED
-        if ("COMPLETED".equals(currentStatus)) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Cannot change status of completed payment");
-        }
-
-        // PAID can only go to REFUNDED or COMPLETED
-        if ("PAID".equals(currentStatus) && !"REFUNDED".equals(status) && !"COMPLETED".equals(status)) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Paid payments can only be refunded or completed");
-        }
-
-        payment.setStatus(status);
-        return paymentRepository.save(payment);
     }
 }
