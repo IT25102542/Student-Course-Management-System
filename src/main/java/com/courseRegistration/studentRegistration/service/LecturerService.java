@@ -94,6 +94,15 @@ public class LecturerService {
         return lecturerRepository.save(lecturer);
     }
 
+    public void deleteLecturer(Long id) {
+        Lecturer lecturer = getLecturerById(id);
+        if (!courseRepository.findByLecturerId(id).isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "This lecturer is assigned to courses. Reassign those courses before deleting the lecturer.");
+        }
+        lecturerRepository.delete(lecturer);
+    }
+
 
 
 
