@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Coursera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#5624d0' },
+                    fontFamily: { sans: ['Inter'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #2D2F31; color: white; padding: 12px 20px; border-radius: 8px; z-index: 9999; animation: fadeInOut 3s ease-in-out; }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(20px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(20px); } }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<div class="min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold" style="color: #5624d0;">Coursera</h1>
+            <p class="text-gray-500 mt-2">Access your account</p>
+        </div>
+
+        <!-- Role Toggle -->
+        <div class="flex gap-2 bg-gray-100 rounded-xl p-1 mb-6">
+            <button id="studentTab" class="flex-1 py-2 rounded-lg font-semibold transition-all bg-white text-primary shadow-sm" style="color: #5624d0;">Student</button>
+            <button id="adminTab" class="flex-1 py-2 rounded-lg font-semibold transition-all text-gray-500 hover:text-primary" style="hover:color: #5624d0;">Admin</button>
+            <button id="lecturerTab" class="flex-1 py-2 rounded-lg font-semibold transition-all text-gray-500 hover:text-primary" style="hover:color: #5624d0;">Lecturer</button>
+        </div>
+
+        <!-- Student Login Form -->
+        <form id="studentForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="studentEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="student@example.com" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input type="password" id="studentPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="••••••" required>
+            </div>
+            <button type="submit" class="w-full font-semibold py-2 rounded-lg hover:opacity-90 transition text-white" style="background-color: #5624d0;">Login as Student</button>
+        </form>
+
+        <!-- Lecturer Login Form (hidden by default) -->
+        <form id="lecturerForm" class="space-y-4 hidden">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input type="text" id="lecturerUsername" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="lecturer" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input type="password" id="lecturerPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="••••••" required>
+            </div>
+            <button type="submit" class="w-full font-semibold py-2 rounded-lg hover:opacity-90 transition text-white" style="background-color: #5624d0;">Login as Lecturer</button>
+        </form>
+
+        <!-- Admin Login Form (hidden by default) -->
+        <form id="adminForm" class="space-y-4 hidden">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="adminEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="admin@site.com" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input type="password" id="adminPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="••••••" required>
+            </div>
+            <button type="submit" class="w-full font-semibold py-2 rounded-lg hover:opacity-90 transition text-white" style="background-color: #5624d0;">Login as Admin</button>
+        </form>
+
+        <!-- Register Link - PURPLE color hardcoded -->
+        <p class="text-center text-sm text-gray-500 mt-6">
+            Don't have an account? <a href="/register.html" style="color: #5624d0;" class="font-semibold hover:underline">Register now</a>
+        </p>
+    </div>
+</div>
+
+<script>
+    function showToast(message, isError = false) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.backgroundColor = isError ? '#dc2626' : '#2D2F31';
+        toast.innerHTML = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    const studentTab = document.getElementById('studentTab');
+    const adminTab = document.getElementById('adminTab');
+    const lecturerTab = document.getElementById('lecturerTab');
+    const studentForm = document.getElementById('studentForm');
+    const adminForm = document.getElementById('adminForm');
+    const lecturerForm = document.getElementById('lecturerForm');
+
+    function setActiveTab(activeTab, activeForm) {
+        [studentTab, adminTab, lecturerTab].forEach(tab => {
+            tab.className = 'flex-1 py-2 rounded-lg font-semibold text-gray-500 hover:text-primary';
+        });
+        [studentForm, adminForm, lecturerForm].forEach(form => form.classList.add('hidden'));
+        activeTab.className = 'flex-1 py-2 rounded-lg font-semibold bg-white shadow-sm';
+        activeTab.style.color = '#5624d0';
+        activeForm.classList.remove('hidden');
+    }
+
+    studentTab.addEventListener('click', () => setActiveTab(studentTab, studentForm));
+    adminTab.addEventListener('click', () => setActiveTab(adminTab, adminForm));
+    lecturerTab.addEventListener('click', () => setActiveTab(lecturerTab, lecturerForm));
+
+    // Student Login
+    studentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/students/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: document.getElementById('studentEmail').value,
+                    password: document.getElementById('studentPassword').value
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            localStorage.setItem('studentUser', JSON.stringify(data));
+            window.location.href = '/dashboard.html';
+        } catch (err) { showToast(err.message, true); }
+    });
+
+    // Admin Login
+    adminForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/admins/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: document.getElementById('adminEmail').value,
+                    password: document.getElementById('adminPassword').value
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            localStorage.setItem('adminUser', JSON.stringify(data));
+            window.location.href = '/admin.html';
+        } catch (err) { showToast(err.message, true); }
+    });
+
+    // Lecturer Login
+    lecturerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/lecturers/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: document.getElementById('lecturerUsername').value,
+                    password: document.getElementById('lecturerPassword').value
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            localStorage.setItem('lecturerUser', JSON.stringify(data));
+            window.location.href = '/lecturer-dashboard.html';
+        } catch (err) { showToast(err.message, true); }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Courses - Coursera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#5624d0', 'deep-charcoal': '#2D2F31' },
+                    fontFamily: { sans: ['Inter'] },
+                    maxWidth: { 'container-max': '1340px' }
+                }
+            }
+        }
+    </script>
+    <style>
+        .course-card-hover { transition: all 0.3s ease; }
+        .course-card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Navbar -->
+<nav class="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm">
+    <div class="max-w-container-max mx-auto px-4 md:px-6 flex justify-between items-center h-16">
+        <a href="/" class="text-2xl font-extrabold text-primary">Coursera</a>
+        <div class="hidden md:flex items-center gap-6">
+            <a href="/" class="text-gray-600 font-medium hover:text-primary">Home</a>
+            <a href="/all-courses.html" class="text-primary font-medium border-b-2 border-primary">All Courses</a>
+            <a href="/login.html" class="text-gray-600 font-medium hover:text-primary">My Learning</a>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/login.html" class="hidden md:block px-5 py-2 border border-gray-400 text-gray-700 font-semibold text-sm rounded-md hover:bg-gray-50">Log In</a>
+            <a href="/register.html" class="px-5 py-2 bg-deep-charcoal text-white font-semibold text-sm rounded-md hover:opacity-90">Sign Up</a>
+        </div>
+    </div>
+</nav>
+
+<main class="max-w-container-max mx-auto px-4 md:px-6 py-8">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">All Courses</h1>
+        <p class="text-gray-500 mt-1">Browse our complete catalog of expert-led courses</p>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="mb-6 flex gap-3">
+        <div class="flex-1 relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+            <input type="text" id="searchInput" placeholder="Search by title, code, subject, or description..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+        </div>
+        <button onclick="applySearch()" class="px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90">Search</button>
+    </div>
+
+    <!-- Course Count -->
+    <div class="mb-4 text-sm text-gray-500">
+        <span id="courseCount">0</span> courses found
+    </div>
+
+    <!-- Courses Grid -->
+    <div id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div class="text-center py-10 text-gray-400 col-span-full">Loading courses...</div>
+    </div>
+</main>
+
+<!-- Footer -->
+<footer class="bg-deep-charcoal mt-12 py-8">
+    <div class="max-w-container-max mx-auto px-4 md:px-6 text-center text-gray-400 text-sm">
+        <p>© 2024 Coursera. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+    let allCourses = [];
+    const formatMoney = (amt) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amt);
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
+    }
+
+    function formatLecturers(lecturers = []) {
+        return lecturers.length ? lecturers.map(l => escapeHtml(l.name)).join(', ') : 'Lecturer team pending';
+    }
+
+    async function loadCourses() {
+        try {
+            const res = await fetch('/api/courses');
+            allCourses = await res.json();
+            renderCourses();
+        } catch (err) {
+            document.getElementById('coursesGrid').innerHTML = '<div class="text-center text-red-500 col-span-full">Failed to load courses</div>';
+        }
+    }
+
+    function renderCourses() {
+        const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+        let filtered = allCourses.filter(c => c.active !== false);
+
+        if (searchTerm) {
+            filtered = filtered.filter(c =>
+                c.title.toLowerCase().includes(searchTerm) ||
+                c.courseCode.toLowerCase().includes(searchTerm) ||
+                (c.subjects && c.subjects.toLowerCase().includes(searchTerm)) ||
+                (c.description && c.description.toLowerCase().includes(searchTerm))
+            );
+        }
+
+        document.getElementById('courseCount').innerText = filtered.length;
+
+        if (filtered.length === 0) {
+            document.getElementById('coursesGrid').innerHTML = '<div class="text-center py-10 text-gray-400 col-span-full">No courses match your search</div>';
+            return;
+        }
+
+        document.getElementById('coursesGrid').innerHTML = filtered.map(course => `
+            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden course-card-hover">
+                <div class="aspect-video bg-gray-100 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-5xl text-gray-400">menu_book</span>
+                </div>
+                <div class="p-4">
+                    <div class="text-xs text-primary font-semibold mb-1">${escapeHtml(course.courseCode)}</div>
+                    <h3 class="font-bold text-lg mb-2 line-clamp-2">${escapeHtml(course.title)}</h3>
+                    <p class="text-gray-500 text-xs mb-2">Lecturers: ${formatLecturers(course.lecturers)}</p>
+                    <p class="text-gray-500 text-sm mb-3 line-clamp-2">${escapeHtml(course.description || 'No description')}</p>
+                    <div class="flex items-center justify-between mt-3">
+                        <span class="text-xl font-bold text-primary">${formatMoney(course.price)}</span>
+                        <a href="/course-details.html?id=${course.id}" class="px-3 py-1.5 text-sm bg-primary text-white rounded-lg hover:opacity-90">View Details</a>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function applySearch() { renderCourses(); }
+    document.getElementById('searchInput')?.addEventListener('input', applySearch);
+    document.getElementById('searchInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') applySearch(); });
+
+    loadCourses();
+</script>
+</body>
+</html>
