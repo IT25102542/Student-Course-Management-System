@@ -47,10 +47,41 @@ public class AdminService {
                 "Admin login successful");
     }
 
+    public List<Admin> getAllAdmins() {
+        return adminRepository.findAll();
+    }
+
     private void requireText(String value, String message) {
         if (value == null || value.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, message);
         }
+    }
+
+    // for update Admin
+    public Admin updateAdmin(Long id, Admin updatedAdmin) {
+        Admin admin = adminRepository.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Admin not found"));
+
+        requireText(updatedAdmin.getName(), "Admin name is required");
+        requireText(updatedAdmin.getEmail(), "Admin email is required");
+
+        // Check if email is already taken by another admin
+        if (!admin.getEmail().equals(updatedAdmin.getEmail())
+                && adminRepository.existsByEmail(updatedAdmin.getEmail())) {
+            throw new ApiException(HttpStatus.CONFLICT, "This admin email is already registered");
+        }
+
+        admin.setName(updatedAdmin.getName());
+        admin.setEmail(updatedAdmin.getEmail());
+
+        if (updatedAdmin.getPassword() != null && !updatedAdmin.getPassword().isBlank()) {
+            if (updatedAdmin.getPassword().length() < 6) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Password must be at least 6 characters");
+            }
+            admin.setPassword(updatedAdmin.getPassword());
+        }
+
+        return adminRepository.save(admin);
     }
 }
 
