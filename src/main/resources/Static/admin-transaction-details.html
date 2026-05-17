@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Details - Coursera Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #2D2F31; color: white; padding: 12px 20px; border-radius: 8px; z-index: 9999; animation: fadeInOut 3s ease-in-out; }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(20px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(20px); } }
+        .status-paid { background-color: #1E8E3E; color: white; padding: 4px 12px; border-radius: 999px; font-size: 12px; display: inline-block; }
+        .status-refunded { background-color: #9CA3AF; color: white; padding: 4px 12px; border-radius: 999px; font-size: 12px; display: inline-block; }
+        .status-pending { background-color: #F59E0B; color: white; padding: 4px 12px; border-radius: 999px; font-size: 12px; display: inline-block; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<nav class="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm">
+    <div class="max-w-container-max mx-auto px-4 md:px-6 flex justify-between items-center h-16">
+        <a href="/" class="text-2xl font-extrabold" style="color: #5624d0;">Coursera Admin</a>
+        <a href="/admin.html" class="text-gray-600 hover:text-primary" style="color: #5624d0;">← Back to Admin Dashboard</a>
+    </div>
+</nav>
+
+<main class="max-w-container-max mx-auto px-4 md:px-6 py-8" id="transactionContainer">
+    <div class="text-center py-20 text-gray-400">Loading transaction details...</div>
+</main>
+
+<script>
+    let paymentId = null;
+    const formatMoney = (amt) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amt);
+
+    function showToast(msg, isError = false) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.backgroundColor = isError ? '#dc2626' : '#2D2F31';
+        toast.innerHTML = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
+    }
+
+    function getStatusClass(status) {
+        if (status === 'PAID') return 'status-paid';
+        if (status === 'REFUNDED') return 'status-refunded';
+        return 'status-pending';
+    }
+
+    async function processRefund() {
+        if (!confirm('Are you sure you want to refund this payment? This cannot be undone.')) return;
+        try {
+            const response = await fetch(`/api/payments/${paymentId}/refund`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: 'Admin initiated refund', initiatedBy: 'admin' })
+            });
+            if (!response.ok) { const error = await response.json(); throw new Error(error.message); }
+            showToast('Refund processed successfully!');
+            setTimeout(() => window.location.reload(), 1500);
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    async function loadTransactionDetails() {
+        const params = new URLSearchParams(window.location.search);
+        const transactionRef = params.get('ref');
+        if (!transactionRef) {
+            document.getElementById('transactionContainer').innerHTML = '<div class="text-center text-red-500">No transaction selected</div>';
+            return;
+        }
+
+        try {
+            const payment = await fetch(`/api/payments/transaction/${transactionRef}`).then(r => r.json());
+            paymentId = payment.id;
+
+            // Find enrollment to get student and course info
+            let studentName = 'Unknown', courseTitle = 'Unknown';
+            try {
+                const enrollments = await fetch(`/api/enrollments`).then(r => r.json());
+                const enrollment = enrollments.find(e => e.payment?.transactionReference === transactionRef);
+                if (enrollment) {
+                    studentName = enrollment.student?.fullName || 'Unknown';
+                    courseTitle = enrollment.course?.title || 'Unknown';
+                }
+            } catch(e) { console.warn(e); }
+
+            document.getElementById('transactionContainer').innerHTML = `
+                <div class="bg-white rounded-xl shadow-sm border p-6 md:p-8">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">Transaction Details</h1>
+                            <p class="text-gray-500 font-mono mt-1">${escapeHtml(payment.transactionReference)}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="/receipt.html?paymentId=${payment.id}" class="px-4 py-2 text-white rounded-lg hover:opacity-90" style="background-color: #5624d0;">View Receipt</a>
+                            <a href="/admin.html" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Back to Admin</a>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-gray-500 text-sm">Amount</div>
+                            <div class="text-2xl font-bold" style="color: #5624d0;">${formatMoney(payment.amount)}</div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-gray-500 text-sm">Status</div>
+                            <div><span class="${getStatusClass(payment.status)}">${payment.status}</span></div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-gray-500 text-sm">Payment Method</div>
+                            <div>${escapeHtml(payment.paymentMethod)}</div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-gray-500 text-sm">Card Holder Name</div>
+                            <div>${escapeHtml(payment.cardHolderName)}</div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-gray-500 text-sm">Student Name</div>
+                            <div class="font-medium">${escapeHtml(studentName)}</div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-gray-500 text-sm">Course</div>
+                            <div>${escapeHtml(courseTitle)}</div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-gray-500 text-sm">Payment Date</div>
+                            <div>${payment.paidAt ? new Date(payment.paidAt).toLocaleString() : 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    ${payment.status === 'PAID' ? `
+                    <div class="border-t pt-6">
+                        <h2 class="text-xl font-bold mb-4">Process Refund</h2>
+                        <button onclick="processRefund()" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                            Process Full Refund
+                        </button>
+                    </div>
+                    ` : payment.status === 'REFUNDED' ? `
+                    <div class="border-t pt-6">
+                        <div class="text-gray-500 text-center py-4">This transaction has been refunded</div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        } catch (err) {
+            document.getElementById('transactionContainer').innerHTML = `<div class="text-center text-red-500">Error: ${err.message}</div>`;
+        }
+    }
+
+    loadTransactionDetails();
+</script>
+</body>
+</html>

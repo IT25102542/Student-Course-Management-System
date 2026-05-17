@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Coursera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#5624d0', 'primary-dark': '#3e00ab' },
+                    fontFamily: { sans: ['Inter'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        .slide-down { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .slide-down.open { max-height: 500px; transition: max-height 0.3s ease-in; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #2D2F31; color: white; padding: 12px 20px; border-radius: 8px; z-index: 9999; animation: fadeInOut 3s ease-in-out; }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(20px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(20px); } }
+        .status-paid { background-color: #1E8E3E; color: white; padding: 2px 8px; border-radius: 999px; font-size: 12px; display: inline-block; }
+        .status-refunded { background-color: #9CA3AF; color: white; padding: 2px 8px; border-radius: 999px; font-size: 12px; display: inline-block; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Admin Login Screen -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold" style="color: #5624d0;">Coursera</h1>
+            <p class="text-gray-500 mt-2">Admin Access Portal</p>
+        </div>
+        <form id="adminLoginForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="adminEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="admin@site.com" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input type="password" id="adminPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="••••••" required>
+            </div>
+            <button type="submit" class="w-full text-white font-semibold py-2 rounded-lg hover:opacity-90 transition" style="background-color: #5624d0;">Login as Admin</button>
+        </form>
+    </div>
+</div>
+
+<!-- Admin Dashboard -->
+<div id="dashboardScreen" class="hidden">
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl font-bold" style="color: #5624d0;">Coursera</span>
+                    <span class="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full" style="color: #5624d0;">Admin</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="adminNameDisplay" class="text-gray-700 font-medium"></span>
+                    <button onclick="logout()" class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p class="text-gray-500 mt-1">Welcome back, <span id="adminNameWelcome"></span></p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-500 text-sm">Total Students</p><p id="totalStudents" class="text-3xl font-bold text-gray-900">0</p></div>
+                    <span class="material-symbols-outlined text-4xl text-primary/70">groups</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-500 text-sm">Total Courses</p><p id="totalCourses" class="text-3xl font-bold text-gray-900">0</p></div>
+                    <span class="material-symbols-outlined text-4xl text-primary/70">menu_book</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-500 text-sm">Total Enrollments</p><p id="totalEnrollments" class="text-3xl font-bold text-gray-900">0</p></div>
+                    <span class="material-symbols-outlined text-4xl text-primary/70">assignment</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between">
+                    <div><p class="text-gray-500 text-sm">Total Revenue</p><p id="totalRevenue" class="text-3xl font-bold" style="color: #5624d0;">LKR 0</p></div>
+                    <span class="material-symbols-outlined text-4xl text-primary/70">payments</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex gap-2 border-b border-gray-200 mb-6">
+            <button onclick="showTab('courses')" id="tabCoursesBtn" class="px-4 py-2 text-sm font-semibold" style="color: #5624d0; border-bottom: 2px solid #5624d0;">Courses</button>
+            <button onclick="showTab('students')" id="tabStudentsBtn" class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700">Students</button>
+            <button onclick="showTab('transactions')" id="tabTransactionsBtn" class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700">Transactions</button>
+            <button onclick="showTab('admins')" id="tabAdminsBtn" class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700">Admins</button>
+            <button onclick="showTab('lecturers')" id="tabLecturersBtn" class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700">Lecturers</button>
+        </div>
+
+        <!-- TAB 1: COURSE MANAGEMENT -->
+        <div id="coursesTab" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">All Courses</h2>
+                <button onclick="toggleCourseForm()" class="px-4 py-2 text-white text-sm rounded-lg hover:opacity-90" style="background-color: #5624d0;">+ Add Course</button>
+            </div>
+            <div id="addCourseForm" class="slide-down bg-gray-50 px-6 py-0 border-b border-gray-100">
+                <div class="py-4">
+                    <h3 class="font-semibold text-gray-900 mb-3">Add New Course</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <input type="text" id="courseCode" placeholder="Course Code" class="px-3 py-2 border rounded-lg">
+                        <input type="text" id="courseTitle" placeholder="Course Title" class="px-3 py-2 border rounded-lg">
+                        <input type="number" id="coursePrice" placeholder="Price (LKR)" class="px-3 py-2 border rounded-lg">
+                        <input type="number" id="courseCapacity" placeholder="Capacity" class="px-3 py-2 border rounded-lg">
+                        <input type="text" id="courseDuration" placeholder="Duration" class="px-3 py-2 border rounded-lg">
+                        <textarea id="courseDesc" placeholder="Description" rows="2" class="px-3 py-2 border rounded-lg"></textarea>
+                        <textarea id="courseSubjects" placeholder="Subjects (comma separated)" rows="2" class="px-3 py-2 border rounded-lg"></textarea>
+                        <select id="courseLecturers" multiple size="4" class="px-3 py-2 border rounded-lg"></select>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="courseActive" class="w-4 h-4" checked>
+                            <label class="text-sm text-gray-700">Active</label>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="submitNewCourse()" class="px-4 py-2 text-white rounded-lg hover:opacity-90" style="background-color: #5624d0;">Save</button>
+                        <button onclick="toggleCourseForm()" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <!-- ✅ FIXED: Table with proper column widths to prevent collapsing -->
+            <div class="overflow-x-auto">
+                <table class="w-full" style="min-width: 900px;">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-24">Code</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-48">Title</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-40">Lecturers</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-28">Price</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-20">Capacity</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-20">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-32">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="coursesTable" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 2: STUDENT MANAGEMENT -->
+        <div id="studentsTab" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100"><h2 class="text-lg font-bold text-gray-900">All Students</h2></div>
+            <div class="overflow-x-auto">
+                <table class="w-full" style="min-width: 700px;">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-32">Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-48">Email</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-28">Phone</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-24">Courses</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-24">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="studentsTable" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 3: TRANSACTIONS -->
+        <div id="transactionsTab" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100"><h2 class="text-lg font-bold text-gray-900">Transaction History</h2></div>
+            <div class="overflow-x-auto">
+                <table class="w-full" style="min-width: 950px;">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-32">Ref</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-32">Student</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-40">Course</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-24">Amount</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-20">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-24">Date</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-20">Receipt</th>
+                    </tr>
+                    </thead>
+                    <tbody id="transactionsTable" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 4: ADMIN MANAGEMENT -->
+        <div id="adminsTab" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">Admin Users</h2>
+                <button onclick="toggleAdminForm()" class="px-4 py-2 text-white text-sm rounded-lg hover:opacity-90" style="background-color: #5624d0;">+ Add Admin</button>
+            </div>
+            <div id="addAdminForm" class="slide-down bg-gray-50 px-6 py-0 border-b border-gray-100">
+                <div class="py-4">
+                    <h3 class="font-semibold text-gray-900 mb-3">Add New Admin</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <input type="text" id="newAdminName" placeholder="Full Name" class="px-3 py-2 border rounded-lg">
+                        <input type="email" id="newAdminEmail" placeholder="Email" class="px-3 py-2 border rounded-lg">
+                        <input type="password" id="newAdminPassword" placeholder="Password" class="px-3 py-2 border rounded-lg">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="submitNewAdmin()" class="px-4 py-2 text-white rounded-lg hover:opacity-90" style="background-color: #5624d0;">Save</button>
+                        <button onclick="toggleAdminForm()" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full" style="min-width: 500px;">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500">Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500">Email</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-24">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="adminsTable" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 5: LECTURER MANAGEMENT -->
+        <div id="lecturersTab" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">Lecturers</h2>
+                <button onclick="toggleLecturerForm()" class="px-4 py-2 text-white text-sm rounded-lg hover:opacity-90" style="background-color: #5624d0;">+ Add Lecturer</button>
+            </div>
+            <div id="addLecturerForm" class="slide-down bg-gray-50 px-6 py-0 border-b border-gray-100">
+                <div class="py-4">
+                    <h3 class="font-semibold text-gray-900 mb-3">Add New Lecturer</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <input type="text" id="lecturerName" placeholder="Full Name" class="px-3 py-2 border rounded-lg">
+                        <input type="text" id="lecturerUsername" placeholder="Username" class="px-3 py-2 border rounded-lg">
+                        <input type="password" id="lecturerPassword" placeholder="Password" class="px-3 py-2 border rounded-lg">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="submitNewLecturer()" class="px-4 py-2 text-white rounded-lg hover:opacity-90" style="background-color: #5624d0;">Save</button>
+                        <button onclick="toggleLecturerForm()" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full" style="min-width: 500px;">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500">Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500">Username</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 w-24">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="lecturersTable" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Course Modal -->
+<div id="editCourseModal" class="hidden fixed inset-0 z-[9998] bg-black/40 px-4 py-8 overflow-y-auto">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-xl border border-gray-100">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-gray-900">Edit Course</h2>
+            <button onclick="closeCourseModal()" class="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <input type="text" id="editCourseCode" placeholder="Course Code" class="px-3 py-2 border rounded-lg">
+                <input type="text" id="editCourseTitle" placeholder="Course Title" class="px-3 py-2 border rounded-lg">
+                <input type="number" id="editCoursePrice" placeholder="Price (LKR)" class="px-3 py-2 border rounded-lg">
+                <input type="number" id="editCourseCapacity" placeholder="Capacity" class="px-3 py-2 border rounded-lg">
+                <input type="text" id="editCourseDuration" placeholder="Duration" class="px-3 py-2 border rounded-lg">
+                <select id="editCourseLecturers" multiple size="4" class="px-3 py-2 border rounded-lg"></select>
+                <textarea id="editCourseDesc" placeholder="Description" rows="3" class="px-3 py-2 border rounded-lg md:col-span-2"></textarea>
+                <textarea id="editCourseSubjects" placeholder="Subjects" rows="2" class="px-3 py-2 border rounded-lg md:col-span-2"></textarea>
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="editCourseActive"> Active</label>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeCourseModal()" class="px-4 py-2 border rounded-lg">Cancel</button>
+                <button onclick="submitCourseEdit()" class="px-4 py-2 text-white rounded-lg hover:opacity-90" style="background-color: #5624d0;">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Lecturer Modal -->
+<div id="editLecturerModal" class="hidden fixed inset-0 z-[9998] bg-black/40 px-4 py-8 overflow-y-auto">
+    <div class="max-w-lg mx-auto bg-white rounded-xl shadow-xl border border-gray-100">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between">
+            <h2 class="text-lg font-bold">Edit Lecturer</h2>
+            <button onclick="closeLecturerModal()" class="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 gap-4 mb-4">
+                <input type="text" id="editLecturerName" placeholder="Full Name" class="px-3 py-2 border rounded-lg">
+                <input type="text" id="editLecturerUsername" placeholder="Username" class="px-3 py-2 border rounded-lg">
+                <input type="password" id="editLecturerPassword" placeholder="New password (optional)" class="px-3 py-2 border rounded-lg">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeLecturerModal()" class="px-4 py-2 border rounded-lg">Cancel</button>
+                <button onclick="submitLecturerEdit()" class="px-4 py-2 text-white rounded-lg hover:opacity-90" style="background-color: #5624d0;">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let allCourses = [], allStudents = [], allTransactions = [], allAdmins = [], allLecturers = [], currentAdmin = null;
+    let editingCourseId = null, editingLecturerId = null;
+    const formatMoney = (amt) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amt);
+
+    function showToast(msg, isError = false) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.backgroundColor = isError ? '#dc2626' : '#2D2F31';
+        toast.innerHTML = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    async function request(path, options = {}) {
+        const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : null;
+        if (!res.ok) throw new Error(data?.message || 'Request failed');
+        return data;
+    }
+
+    function toggleCourseForm() { document.getElementById('addCourseForm').classList.toggle('open'); }
+    function toggleAdminForm() { document.getElementById('addAdminForm').classList.toggle('open'); }
+    function toggleLecturerForm() { document.getElementById('addLecturerForm').classList.toggle('open'); }
+
+    function getSelectedLecturerIds() {
+        return Array.from(document.getElementById('courseLecturers').selectedOptions).map(option => Number(option.value));
+    }
+
+    function populateLecturerSelect() {
+        const select = document.getElementById('courseLecturers');
+        if (!select) return;
+        select.innerHTML = allLecturers.map(lecturer =>
+            `<option value="${lecturer.id}">${escapeHtml(lecturer.name)} (${escapeHtml(lecturer.username)})</option>`
+        ).join('');
+    }
+
+    function populateEditLecturerSelect(selectedIds = []) {
+        const select = document.getElementById('editCourseLecturers');
+        if (!select) return;
+        select.innerHTML = allLecturers.map(lecturer =>
+            `<option value="${lecturer.id}" ${selectedIds.includes(lecturer.id) ? 'selected' : ''}>${escapeHtml(lecturer.name)} (${escapeHtml(lecturer.username)})</option>`
+        ).join('');
+    }
+
+    async function submitNewCourse() {
+        const payload = {
+            courseCode: document.getElementById('courseCode').value,
+            title: document.getElementById('courseTitle').value,
+            price: parseFloat(document.getElementById('coursePrice').value),
+            capacity: parseInt(document.getElementById('courseCapacity').value),
+            duration: document.getElementById('courseDuration').value,
+            description: document.getElementById('courseDesc').value,
+            subjects: document.getElementById('courseSubjects').value,
+            active: document.getElementById('courseActive').checked,
+            lecturerIds: getSelectedLecturerIds()
+        };
+        if (!payload.courseCode || !payload.title) { showToast('Course code and title required', true); return; }
+        if (payload.lecturerIds.length === 0) { showToast('Assign at least one lecturer', true); return; }
+        try {
+            await request('/api/courses', { method: 'POST', body: JSON.stringify(payload) });
+            showToast('Course created');
+            toggleCourseForm();
+            document.getElementById('addCourseForm').querySelectorAll('input,textarea').forEach(i => i.value = '');
+            document.getElementById('courseLecturers').selectedIndex = -1;
+            loadAllData();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    async function submitNewAdmin() {
+        const name = document.getElementById('newAdminName').value;
+        const email = document.getElementById('newAdminEmail').value;
+        const password = document.getElementById('newAdminPassword').value;
+        if (!name || !email || !password) { showToast('All fields required', true); return; }
+        try {
+            await request('/api/admins/register', { method: 'POST', body: JSON.stringify({ name, email, password, creatorAdminId: currentAdmin?.id }) });
+            showToast('Admin created');
+            toggleAdminForm();
+            document.getElementById('addAdminForm').querySelectorAll('input').forEach(i => i.value = '');
+            loadAllData();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    async function submitNewLecturer() {
+        const name = document.getElementById('lecturerName').value;
+        const username = document.getElementById('lecturerUsername').value;
+        const password = document.getElementById('lecturerPassword').value;
+        if (!name || !username || !password) { showToast('All fields required', true); return; }
+        try {
+            await request('/api/lecturers/register', { method: 'POST', body: JSON.stringify({ name, username, password, creatorAdminId: currentAdmin?.id }) });
+            showToast('Lecturer created');
+            toggleLecturerForm();
+            document.getElementById('addLecturerForm').querySelectorAll('input').forEach(i => i.value = '');
+            loadAllData();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    document.getElementById('adminLoginForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const result = await request('/api/admins/login', { method: 'POST', body: JSON.stringify({ email: document.getElementById('adminEmail').value, password: document.getElementById('adminPassword').value }) });
+            currentAdmin = result;
+            localStorage.setItem('adminUser', JSON.stringify(result));
+            showDashboard();
+        } catch (err) { showToast(err.message, true); }
+    });
+
+    async function showDashboard() {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('dashboardScreen').classList.remove('hidden');
+        document.getElementById('adminNameDisplay').innerText = currentAdmin?.name || 'Admin';
+        document.getElementById('adminNameWelcome').innerText = currentAdmin?.name || 'Admin';
+        await loadAllData();
+    }
+
+    async function loadAllData() {
+        try {
+            const summary = await request('/api/admin/dashboard/summary');
+            allLecturers = await request('/api/lecturers');
+            populateLecturerSelect();
+            const courses = await request('/api/courses');
+            allCourses = courses;
+            document.getElementById('totalStudents').innerText = summary.totalStudents || 0;
+            document.getElementById('totalCourses').innerText = courses.length || 0;
+            document.getElementById('totalEnrollments').innerText = summary.totalEnrollments || 0;
+            document.getElementById('totalRevenue').innerHTML = formatMoney(summary.totalRevenue || 0);
+            allStudents = await request('/api/admin/dashboard/students');
+            allTransactions = await request('/api/admin/dashboard/transactions/recent');
+            allAdmins = await request('/api/admins');
+            renderCoursesTable(); renderStudentsTable(); renderTransactionsTable(); renderAdminsTable(); renderLecturersTable();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    function renderCoursesTable() {
+        const tbody = document.getElementById('coursesTable');
+        if (!tbody) return;
+        if (allCourses.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">No courses found</td></tr>'; return; }
+        tbody.innerHTML = allCourses.map(c => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 font-mono text-sm">${escapeHtml(c.courseCode)}</td><td class="px-4 py-3 font-medium">${escapeHtml(c.title)}</td><td class="px-4 py-3 text-sm">${formatLecturers(c.lecturers)}</td><td class="px-4 py-3 font-semibold" style="color: #5624d0;">${formatMoney(c.price)}</td><td class="px-4 py-3">${c.capacity}</td><td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full ${c.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${c.active ? 'Active' : 'Inactive'}</span></td><td class="px-4 py-3"><button onclick="editCourse(${c.id})" class="hover:underline text-sm mr-3" style="color: #5624d0;">Edit</button><button onclick="deleteCourseItem(${c.id})" class="text-red-500 hover:underline text-sm">Delete</button></td></tr>`).join('');
+    }
+
+    function renderStudentsTable() {
+        const tbody = document.getElementById('studentsTable');
+        if (!tbody) return;
+        tbody.innerHTML = allStudents.map(s => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 font-medium"><a href="/admin-student-details.html?id=${s.id}" class="hover:underline" style="color: #5624d0;">${escapeHtml(s.fullName)}</a></td><td class="px-4 py-3 text-sm">${escapeHtml(s.email)}</td><td class="px-4 py-3 text-sm">${escapeHtml(s.phoneNumber || '-')}</td><td class="px-4 py-3 text-sm">${s.enrolledCoursesCount} courses</td><td class="px-4 py-3"><button onclick="deleteStudent(${s.id})" class="text-red-500 hover:underline text-sm">Delete</button></td></tr>`).join('');
+    }
+
+    function renderTransactionsTable() {
+        const tbody = document.getElementById('transactionsTable');
+        if (!tbody) return;
+        tbody.innerHTML = allTransactions.map(t => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 font-mono text-xs"><a href="/admin-transaction-details.html?ref=${escapeHtml(t.transactionReference)}" class="hover:underline" style="color: #5624d0;">${escapeHtml(t.transactionReference)}</a></td><td class="px-4 py-3 font-medium">${escapeHtml(t.studentName)}</td><td class="px-4 py-3">${escapeHtml(t.courseTitle)}</td><td class="px-4 py-3 font-semibold" style="color: #5624d0;">${formatMoney(t.amount)}</td><td class="px-4 py-3"><span class="${t.status === 'PAID' ? 'status-paid' : 'status-refunded'}">${t.status}</span></td><td class="px-4 py-3 text-sm">${new Date(t.paidAt).toLocaleDateString()}</td><td class="px-4 py-3"><a href="/receipt.html?paymentId=${t.id}" class="hover:underline text-sm" style="color: #5624d0;">Receipt</a></td></tr>`).join('');
+    }
+
+    function renderAdminsTable() {
+        const tbody = document.getElementById('adminsTable');
+        if (!tbody) return;
+        tbody.innerHTML = allAdmins.map(a => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 font-medium">${escapeHtml(a.name)}</td><td class="px-4 py-3 text-sm">${escapeHtml(a.email)}</td><td class="px-4 py-3"><button onclick="editAdmin(${a.id})" class="hover:underline text-sm mr-3" style="color: #5624d0;">Edit</button><button onclick="deleteAdmin(${a.id})" class="text-red-500 hover:underline text-sm" ${a.id === currentAdmin?.id ? 'disabled' : ''}>${a.id === currentAdmin?.id ? 'Current' : 'Delete'}</button></td></tr>`).join('');
+    }
+
+    function renderLecturersTable() {
+        const tbody = document.getElementById('lecturersTable');
+        if (!tbody) return;
+        if (allLecturers.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-gray-400">No lecturers found</td></tr>'; return; }
+        tbody.innerHTML = allLecturers.map(l => `<tr class="hover:bg-gray-50"><td class="px-4 py-3 font-medium">${escapeHtml(l.name)}</td><td class="px-4 py-3 text-sm">${escapeHtml(l.username)}</td><td class="px-4 py-3"><button onclick="editLecturer(${l.id})" class="hover:underline text-sm mr-3" style="color: #5624d0;">Edit</button><button onclick="deleteLecturer(${l.id})" class="text-red-500 hover:underline text-sm">Delete</button></td></tr>`).join('');
+    }
+
+    async function editAdmin(id) {
+        const admin = allAdmins.find(a => a.id === id);
+        if (!admin) return;
+        const newName = prompt('Enter new name:', admin.name);
+        if (!newName) return;
+        const newEmail = prompt('Enter new email:', admin.email);
+        if (!newEmail) return;
+        const newPassword = prompt('Enter new password (leave blank to keep same):', '');
+        const payload = { name: newName, email: newEmail };
+        if (newPassword && newPassword.length >= 6) payload.password = newPassword;
+        try {
+            await request(`/api/admins/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+            showToast('Admin updated');
+            loadAllData();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    async function deleteAdmin(id) {
+        if (id === currentAdmin?.id) { showToast('You cannot delete your own account', true); return; }
+        if (!confirm('Delete this admin?')) return;
+        try {
+            await request(`/api/admins/${id}`, { method: 'DELETE' });
+            showToast('Admin deleted');
+            loadAllData();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    async function deleteStudent(id) {
+        const student = allStudents.find(s => s.id === id);
+        if (!confirm(`Delete student "${student?.fullName}"? This will also delete all their enrollments and payments.`)) return;
+        try {
+            await request(`/api/students/${id}`, { method: 'DELETE' });
+            showToast('Student deleted');
+            loadAllData();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    function editCourse(id) {
+        const course = allCourses.find(c => c.id === id);
+        if (!course) return;
+        editingCourseId = id;
+        document.getElementById('editCourseCode').value = course.courseCode || '';
+        document.getElementById('editCourseTitle').value = course.title || '';
+        document.getElementById('editCoursePrice').value = course.price ?? '';
+        document.getElementById('editCourseCapacity').value = course.capacity ?? '';
+        document.getElementById('editCourseDuration').value = course.duration || '';
+        document.getElementById('editCourseDesc').value = course.description || '';
+        document.getElementById('editCourseSubjects').value = course.subjects || '';
+        document.getElementById('editCourseActive').checked = course.active !== false;
+        populateEditLecturerSelect((course.lecturers || []).map(lecturer => lecturer.id));
+        document.getElementById('editCourseModal').classList.remove('hidden');
+    }
+
+    function closeCourseModal() { editingCourseId = null; document.getElementById('editCourseModal').classList.add('hidden'); }
+
+    async function submitCourseEdit() {
+        const lecturerIds = Array.from(document.getElementById('editCourseLecturers').selectedOptions).map(option => Number(option.value));
+        if (lecturerIds.length === 0) { showToast('Assign at least one lecturer', true); return; }
+        const payload = {
+            courseCode: document.getElementById('editCourseCode').value,
+            title: document.getElementById('editCourseTitle').value,
+            price: parseFloat(document.getElementById('editCoursePrice').value),
+            capacity: parseInt(document.getElementById('editCourseCapacity').value),
+            duration: document.getElementById('editCourseDuration').value,
+            description: document.getElementById('editCourseDesc').value,
+            subjects: document.getElementById('editCourseSubjects').value,
+            active: document.getElementById('editCourseActive').checked,
+            lecturerIds
+        };
+        try {
+            await request(`/api/courses/${editingCourseId}`, { method: 'PUT', body: JSON.stringify(payload) });
+            showToast('Course updated');
+            closeCourseModal();
+            loadAllData();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    async function deleteCourseItem(id) {
+        if (!confirm('Delete this course?')) return;
+        try {
+            await request(`/api/courses/${id}`, { method: 'DELETE' });
+            showToast('Course deleted');
+            loadAllData();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    function editLecturer(id) {
+        const lecturer = allLecturers.find(l => l.id === id);
+        if (!lecturer) return;
+        editingLecturerId = id;
+        document.getElementById('editLecturerName').value = lecturer.name || '';
+        document.getElementById('editLecturerUsername').value = lecturer.username || '';
+        document.getElementById('editLecturerPassword').value = '';
+        document.getElementById('editLecturerModal').classList.remove('hidden');
+    }
+
+    function closeLecturerModal() { editingLecturerId = null; document.getElementById('editLecturerModal').classList.add('hidden'); }
+
+    async function submitLecturerEdit() {
+        const payload = {
+            name: document.getElementById('editLecturerName').value,
+            username: document.getElementById('editLecturerUsername').value,
+            password: document.getElementById('editLecturerPassword').value
+        };
+        try {
+            await request(`/api/lecturers/${editingLecturerId}`, { method: 'PUT', body: JSON.stringify(payload) });
+            showToast('Lecturer updated');
+            closeLecturerModal();
+            loadAllData();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    async function deleteLecturer(id) {
+        if (!confirm('Delete this lecturer?')) return;
+        try {
+            await request(`/api/lecturers/${id}`, { method: 'DELETE' });
+            showToast('Lecturer deleted');
+            loadAllData();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    function showTab(tab) {
+        ['courses', 'students', 'transactions', 'admins', 'lecturers'].forEach(t => {
+            document.getElementById(`${t}Tab`).classList.add('hidden');
+        });
+        document.getElementById(`${tab}Tab`).classList.remove('hidden');
+
+        const tabs = ['Courses', 'Students', 'Transactions', 'Admins', 'Lecturers'];
+        tabs.forEach(t => {
+            const btn = document.getElementById(`tab${t}Btn`);
+            if (btn) {
+                btn.style.color = '#6B7280';
+                btn.style.borderBottom = 'none';
+            }
+        });
+        const activeBtn = document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}Btn`);
+        if (activeBtn) {
+            activeBtn.style.color = '#5624d0';
+            activeBtn.style.borderBottom = '2px solid #5624d0';
+        }
+    }
+
+    function logout() { localStorage.removeItem('adminUser'); location.reload(); }
+
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m)); }
+
+    function formatLecturers(lecturers = []) { return lecturers.length ? lecturers.map(l => escapeHtml(l.name)).join(', ') : '<span class="text-red-500">Unassigned</span>'; }
+
+    const savedAdmin = localStorage.getItem('adminUser');
+    if (savedAdmin) { currentAdmin = JSON.parse(savedAdmin); showDashboard(); }
+
+    window.toggleCourseForm = toggleCourseForm; window.toggleAdminForm = toggleAdminForm; window.toggleLecturerForm = toggleLecturerForm;
+    window.submitNewCourse = submitNewCourse; window.submitNewAdmin = submitNewAdmin; window.submitNewLecturer = submitNewLecturer;
+    window.editCourse = editCourse; window.closeCourseModal = closeCourseModal; window.submitCourseEdit = submitCourseEdit;
+    window.deleteCourseItem = deleteCourseItem; window.editAdmin = editAdmin; window.deleteAdmin = deleteAdmin;
+    window.deleteStudent = deleteStudent; window.editLecturer = editLecturer; window.closeLecturerModal = closeLecturerModal;
+    window.submitLecturerEdit = submitLecturerEdit; window.deleteLecturer = deleteLecturer; window.showTab = showTab; window.logout = logout;
+</script>
+</body>
+</html>

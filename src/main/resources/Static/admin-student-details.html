@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Details - Coursera Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#5624d0', 'deep-charcoal': '#2D2F31' },
+                    fontFamily: { sans: ['Inter'] },
+                    maxWidth: { 'container-max': '1340px' }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+
+<nav class="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm">
+    <div class="max-w-container-max mx-auto px-4 md:px-6 flex justify-between items-center h-16">
+        <a href="/" class="text-2xl font-extrabold text-primary">Coursera Admin</a>
+        <a href="/admin.html" class="text-gray-600 hover:text-primary">← Back to Admin Dashboard</a>
+    </div>
+</nav>
+
+<main class="max-w-container-max mx-auto px-4 md:px-6 py-8" id="studentContainer">
+    <div class="text-center py-20 text-gray-400">Loading student details...</div>
+</main>
+
+<script>
+    const formatMoney = (amt) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amt);
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m)); }
+
+    async function loadStudentDetails() {
+        const params = new URLSearchParams(window.location.search);
+        const studentId = params.get('id');
+        if (!studentId) { document.getElementById('studentContainer').innerHTML = '<div class="text-center text-red-500">No student selected</div>'; return; }
+
+        try {
+            const [student, enrollments, payments] = await Promise.all([
+                fetch(`/api/students/${studentId}`).then(r => r.json()),
+                fetch(`/api/enrollments/student/${studentId}`).then(r => r.json()),
+                fetch(`/api/payments/student/${studentId}`).then(r => r.json())
+            ]);
+
+            const totalSpent = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+            document.getElementById('studentContainer').innerHTML = `
+                <div class="bg-white rounded-xl shadow-sm border p-6 md:p-8">
+                    <div class="flex justify-between items-start mb-6">
+                        <div><h1 class="text-3xl font-bold text-gray-900">${escapeHtml(student.fullName)}</h1><p class="text-gray-500">Student since ${new Date().toLocaleDateString()}</p></div>
+                        <a href="/admin.html" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Back to Admin</a>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-gray-50 rounded-lg p-4"><div class="text-gray-500 text-sm">Email</div><div class="font-medium">${escapeHtml(student.email)}</div></div>
+                        <div class="bg-gray-50 rounded-lg p-4"><div class="text-gray-500 text-sm">Phone</div><div class="font-medium">${escapeHtml(student.phoneNumber || 'Not provided')}</div></div>
+                        <div class="bg-gray-50 rounded-lg p-4"><div class="text-gray-500 text-sm">Age</div><div class="font-medium">${student.age || 'Not provided'}</div></div>
+                    </div>
+                    <div class="mb-8"><h2 class="text-xl font-bold mb-4">Enrolled Courses (${enrollments.length})</h2>
+                        ${enrollments.length === 0 ? '<div class="text-gray-400">No courses enrolled</div>' : `
+                        <table class="w-full"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left">Course</th><th class="px-4 py-2 text-left">Price</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Enrolled Date</th></tr></thead>
+                        <tbody>${enrollments.map(e => `<tr class="border-b"><td class="px-4 py-2">${escapeHtml(e.course?.title)}</td><td class="px-4 py-2">${formatMoney(e.payment?.amount)}</td><td class="px-4 py-2"><span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">${e.status || 'REGISTERED'}</span></td><td class="px-4 py-2 text-sm">${new Date(e.registeredAt).toLocaleDateString()}</td></tr>`).join('')}</tbody></table>`}
+                    </div>
+                    <div><h2 class="text-xl font-bold mb-4">Payment History</h2>
+                        ${payments.length === 0 ? '<div class="text-gray-400">No payments recorded</div>' : `
+                        <table class="w-full"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left">Transaction</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Method</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Date</th></tr></thead>
+                        <tbody>${payments.map(p => `<tr class="border-b"><td class="px-4 py-2 font-mono text-xs">${escapeHtml(p.transactionReference)}</td><td class="px-4 py-2">${formatMoney(p.amount)}</td><td class="px-4 py-2">${escapeHtml(p.paymentMethod)}</td><td class="px-4 py-2"><span class="px-2 py-1 text-xs rounded-full ${p.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${p.status}</span></td><td class="px-4 py-2 text-sm">${new Date(p.paidAt).toLocaleDateString()}</td></tr>`).join('')}</tbody></table>`}
+                        <div class="mt-4 text-right font-bold">Total Spent: ${formatMoney(totalSpent)}</div>
+                    </div>
+                </div>
+            `;
+        } catch (err) { document.getElementById('studentContainer').innerHTML = `<div class="text-center text-red-500">Error: ${err.message}</div>`; }
+    }
+    loadStudentDetails();
+</script>
+</body>
+</html>
