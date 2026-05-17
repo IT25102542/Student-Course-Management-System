@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coursera - Student Course Registration System</title>
+
+    <!-- Tailwind CSS + Google Fonts + Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5624d0',
+                        'primary-dark': '#3e00ab',
+                        'deep-charcoal': '#2D2F31',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    maxWidth: {
+                        'container-max': '1340px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .course-card-hover {
+            transition: all 0.3s ease;
+        }
+        .course-card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Navbar -->
+<header class="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm">
+    <nav class="max-w-container-max mx-auto px-4 md:px-6 flex justify-between items-center h-16">
+        <a href="/" class="text-2xl font-extrabold text-primary">Coursera</a>
+        <div class="hidden md:flex items-center gap-6">
+            <a href="/" class="text-primary font-medium border-b-2 border-primary">Home</a>
+            <a href="/all-courses.html" class="text-gray-600 font-medium hover:text-primary">All Courses</a>
+            <a href="/login.html" class="text-gray-600 font-medium hover:text-primary">My Learning</a>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/login.html" class="hidden md:block px-5 py-2 border border-gray-400 text-gray-700 font-semibold text-sm rounded-md hover:bg-gray-50">Log In</a>
+            <a href="/register.html" class="px-5 py-2 bg-deep-charcoal text-white font-semibold text-sm rounded-md hover:opacity-90">Sign Up</a>
+        </div>
+    </nav>
+</header>
+
+<main>
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-primary/5 to-primary/10 py-16 md:py-20">
+        <div class="max-w-container-max mx-auto px-4 md:px-6 text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">Start Your Learning Journey</h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-8">Choose from expert-led courses and build skills for your future</p>
+            <div class="flex justify-center gap-4">
+                <a href="/all-courses.html" class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:opacity-90">
+                    <span class="material-symbols-outlined">explore</span>
+                    Browse All Courses
+                </a>
+                <a href="/login.html" class="inline-flex items-center gap-2 px-6 py-3 border border-primary text-primary font-semibold rounded-lg hover:bg-primary/5">
+                    <span class="material-symbols-outlined">login</span>
+                    Login
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Most Popular Courses Section -->
+    <section class="py-12">
+        <div class="max-w-container-max mx-auto px-4 md:px-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Most Popular Courses</h2>
+                <a href="/all-courses.html" class="text-primary font-semibold hover:underline">View All →</a>
+            </div>
+
+            <!-- Courses Grid -->
+            <div id="popularCoursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="text-center py-10 text-gray-400 col-span-full">Loading popular courses...</div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Footer -->
+<footer class="bg-deep-charcoal mt-12 py-8">
+    <div class="max-w-container-max mx-auto px-4 md:px-6 text-center text-gray-400 text-sm">
+        <p>© 2025 Coursera. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+    let enrollmentsData = [];
+
+    const formatMoney = (amt) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amt);
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
+    }
+
+    // Load enrollments to calculate popularity
+    async function loadEnrollments() {
+        try {
+            const res = await fetch('/api/enrollments');
+            enrollmentsData = await res.json();
+        } catch (err) {
+            console.warn('Failed to load enrollments for popularity:', err);
+            enrollmentsData = [];
+        }
+    }
+
+    // Get enrollment count for a course
+    function getEnrollmentCount(courseId) {
+        return enrollmentsData.filter(e => e.course?.id === courseId).length;
+    }
+
+    function formatLecturers(lecturers = []) {
+        return lecturers.length ? lecturers.map(l => escapeHtml(l.name)).join(', ') : 'Lecturer team pending';
+    }
+
+    function shuffleCourses(courses) {
+        const shuffled = [...courses];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+
+    function getMostPopularCourses(courses) {
+        const activeCourses = courses.filter(c => c.active !== false);
+        const hasEnrollments = activeCourses.some(course => getEnrollmentCount(course.id) > 0);
+
+        if (!hasEnrollments) {
+            return shuffleCourses(activeCourses).slice(0, 4);
+        }
+
+        return [...activeCourses]
+            .sort((a, b) => getEnrollmentCount(b.id) - getEnrollmentCount(a.id))
+            .slice(0, 4);
+    }
+
+    // Load courses and show the top enrolled courses.
+    async function loadCourses() {
+        await loadEnrollments();
+
+        try {
+            const res = await fetch('/api/courses');
+            const courses = await res.json();
+            renderCourses(getMostPopularCourses(courses));
+        } catch (err) {
+            console.error(err);
+            document.getElementById('popularCoursesGrid').innerHTML = '<div class="text-center py-10 text-red-500 col-span-full">Failed to load courses</div>';
+        }
+    }
+
+    function renderCourses(courses) {
+        const container = document.getElementById('popularCoursesGrid');
+        const displayCourses = courses.slice(0, 4);
+
+        if (displayCourses.length === 0) {
+            container.innerHTML = '<div class="text-center py-10 text-gray-400 col-span-full">No courses available</div>';
+            return;
+        }
+
+        container.innerHTML = displayCourses.map(course => `
+            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden course-card-hover">
+                <div class="aspect-video bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-5xl text-primary/50">menu_book</span>
+                </div>
+                <div class="p-4">
+                    <div class="text-xs text-primary font-semibold mb-1">${escapeHtml(course.courseCode)}</div>
+                    <h3 class="font-bold text-lg mb-2">${escapeHtml(course.title)}</h3>
+                    <div class="text-xs text-gray-500 mb-2">Lecturers: ${formatLecturers(course.lecturers)}</div>
+                    <div class="text-sm text-gray-500 mb-3">⭐ ${getEnrollmentCount(course.id)} students enrolled</div>
+                    <div class="flex items-center justify-between mt-3">
+                        <span class="text-base font-bold text-primary">${formatMoney(course.price)}</span>
+                        <div class="flex gap-2">
+                            <a href="/course-details.html?id=${course.id}" class="px-3 py-1.5 text-sm border border-primary text-primary rounded-lg hover:bg-primary/5">View</a>
+                            <a href="/register.html?courseId=${course.id}" class="px-3 py-1.5 text-sm bg-primary text-white rounded-lg hover:opacity-90">Enroll</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    loadCourses();
+</script>
+</body>
+</html>

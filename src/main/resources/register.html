@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Coursera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#5624d0', 'primary-dark': '#3e00ab', 'deep-charcoal': '#2D2F31', 'success-green': '#1E8E3E' },
+                    fontFamily: { sans: ['Inter'] },
+                    maxWidth: { 'container-max': '1340px' }
+                }
+            }
+        }
+    </script>
+    <style>
+        .course-card { transition: all 0.3s ease; cursor: pointer; }
+        .course-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .course-card.selected { border-color: #5624d0; background-color: #f5f0ff; box-shadow: 0 0 0 2px #5624d0; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #2D2F31; color: white; padding: 12px 20px; border-radius: 8px; z-index: 9999; animation: fadeInOut 3s ease-in-out; }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(20px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(20px); } }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<nav class="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm">
+    <div class="max-w-container-max mx-auto px-4 md:px-6 flex justify-between items-center h-16">
+        <a href="/" class="text-2xl font-extrabold text-primary">Coursera</a>
+        <div class="flex gap-3">
+            <a href="/login.html" class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Login</a>
+        </div>
+    </div>
+</nav>
+
+<main class="max-w-container-max mx-auto px-4 md:px-6 py-8">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Start Your Learning Journey</h1>
+        <p class="text-gray-500 mt-2">Choose a course, create your account, and begin today</p>
+    </div>
+
+    <!-- Step Indicators -->
+    <div class="flex justify-center items-center gap-4 mb-10">
+        <div class="flex items-center gap-2">
+            <div id="step1Dot" class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold border-2 border-primary">1</div>
+            <span id="step1Text" class="font-medium text-primary">Select Course</span>
+        </div>
+        <div class="w-12 h-0.5 bg-gray-300"></div>
+        <div class="flex items-center gap-2">
+            <div id="step2Dot" class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold border-2 border-gray-300">2</div>
+            <span id="step2Text" class="text-gray-400">Your Details</span>
+        </div>
+        <div class="w-12 h-0.5 bg-gray-300"></div>
+        <div class="flex items-center gap-2">
+            <div id="step3Dot" class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold border-2 border-gray-300">3</div>
+            <span id="step3Text" class="text-gray-400">Payment</span>
+        </div>
+    </div>
+
+    <!-- Step 1: Course Selection -->
+    <div id="step1" class="bg-white rounded-xl shadow-sm border p-6 md:p-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">Select Your Course</h2>
+        <div id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+            <div class="text-center py-10 text-gray-400 col-span-full">Loading courses...</div>
+        </div>
+        <div class="flex justify-end">
+            <button id="nextStep1" disabled class="px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90 cursor-not-allowed">Continue →</button>
+        </div>
+    </div>
+
+    <!-- Step 2: User Details -->
+    <div id="step2" class="hidden bg-white rounded-xl shadow-sm border p-6 md:p-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">Your Information</h2>
+
+        <!-- Notice for existing student -->
+        <div id="existingStudentNotice" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p class="text-blue-700 text-sm">You are already registered. Your details are pre-filled below. Complete payment to enroll in another course.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div id="fullNameField">
+                <label class="block text-sm font-medium mb-1">Full Name *</label>
+                <input type="text" id="fullName" class="w-full px-3 py-2 border rounded-lg">
+            </div>
+            <div id="emailField">
+                <label class="block text-sm font-medium mb-1">Email *</label>
+                <input type="email" id="email" class="w-full px-3 py-2 border rounded-lg">
+            </div>
+            <div id="passwordField">
+                <label class="block text-sm font-medium mb-1">Password *</label>
+                <input type="password" id="password" class="w-full px-3 py-2 border rounded-lg">
+            </div>
+            <div id="confirmPasswordField">
+                <label class="block text-sm font-medium mb-1">Confirm Password *</label>
+                <input type="password" id="confirmPassword" class="w-full px-3 py-2 border rounded-lg">
+            </div>
+            <div id="phoneField">
+                <label class="block text-sm font-medium mb-1">Phone Number *</label>
+                <input type="tel" id="phoneNumber" class="w-full px-3 py-2 border rounded-lg" placeholder="0712345678">
+            </div>
+            <div id="ageField">
+                <label class="block text-sm font-medium mb-1">Age *</label>
+                <input type="number" id="age" class="w-full px-3 py-2 border rounded-lg" min="1" max="120">
+            </div>
+        </div>
+        <div class="flex justify-between mt-6">
+            <button id="prevStep2" class="px-6 py-2 border rounded-lg hover:bg-gray-50">← Back</button>
+            <button id="nextStep2" class="px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90">Continue →</button>
+        </div>
+    </div>
+
+    <!-- Step 3: Payment -->
+    <div id="step3" class="hidden bg-white rounded-xl shadow-sm border p-6 md:p-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">Payment Details</h2>
+        <div class="bg-primary/5 rounded-lg p-4 mb-6">
+            <div class="flex justify-between items-center"><span class="text-gray-600">Selected Course:</span><span id="selectedCourseTitle" class="font-semibold">-</span></div>
+            <div class="flex justify-between items-center mt-2"><span class="text-gray-600">Amount to Pay:</span><span id="selectedCoursePrice" class="text-2xl font-bold text-primary">LKR 0</span></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div><label class="block text-sm font-medium mb-1">Payment Method *</label><select id="paymentMethod" class="w-full px-3 py-2 border rounded-lg"><option value="Card">💳 Credit/Debit Card</option><option value="Bank Transfer">🏦 Bank Transfer</option><option value="Cash Deposit">💰 Cash Deposit</option></select></div>
+            <div><label class="block text-sm font-medium mb-1">Payer Name *</label><input type="text" id="payerName" class="w-full px-3 py-2 border rounded-lg" placeholder="Full name of person paying"></div>
+        </div>
+        <div class="flex justify-between mt-6">
+            <button id="prevStep3" class="px-6 py-2 border rounded-lg hover:bg-gray-50">← Back</button>
+            <button id="submitRegister" class="px-6 py-2 bg-success-green text-white rounded-lg hover:opacity-90">Complete Registration & Pay</button>
+        </div>
+    </div>
+</main>
+
+<script>
+    let allCourses = [], selectedCourseId = null, selectedCourseData = null;
+    let existingStudentMode = false;
+    let existingStudentData = null;
+    const formatMoney = (amt) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amt);
+
+    function showToast(message, isError = false) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.backgroundColor = isError ? '#dc2626' : '#2D2F31';
+        toast.innerHTML = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function isValidEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m)); }
+    function formatLecturers(lecturers = []) { return lecturers.length ? lecturers.map(l => escapeHtml(l.name)).join(', ') : 'Lecturer team pending'; }
+
+    // Check for existing student mode (Idea 3)
+    async function checkExistingStudentMode() {
+        const params = new URLSearchParams(window.location.search);
+        const studentId = params.get('studentId');
+        const storedStudent = JSON.parse(localStorage.getItem('studentUser') || 'null');
+
+        if (storedStudent && studentId && String(storedStudent.id) === String(studentId)) {
+            existingStudentMode = true;
+            existingStudentData = storedStudent;
+
+            // Show notice
+            const notice = document.getElementById('existingStudentNotice');
+            if (notice) notice.classList.remove('hidden');
+
+            // Fetch latest profile
+            try {
+                const profile = await fetch(`/api/students/${studentId}`).then(r => r.json());
+
+                // Set values
+                document.getElementById('fullName').value = profile.fullName || '';
+                document.getElementById('email').value = profile.email || '';
+                document.getElementById('phoneNumber').value = profile.phoneNumber || '';
+                document.getElementById('age').value = profile.age || '';
+
+                // Disable fields
+                document.getElementById('fullName').disabled = true;
+                document.getElementById('email').disabled = true;
+                document.getElementById('phoneNumber').disabled = true;
+                document.getElementById('age').disabled = true;
+
+                // Hide password fields completely
+                const passwordField = document.getElementById('passwordField');
+                const confirmPasswordField = document.getElementById('confirmPasswordField');
+                if (passwordField) passwordField.style.display = 'none';
+                if (confirmPasswordField) confirmPasswordField.style.display = 'none';
+
+                // Update button text
+                const submitBtn = document.getElementById('submitRegister');
+                if (submitBtn) submitBtn.innerHTML = 'Enroll in Course & Pay';
+
+            } catch (err) {
+                console.error('Failed to load student profile:', err);
+            }
+        }
+        return studentId;
+    }
+
+    async function loadCourses() {
+        try {
+            const res = await fetch('/api/courses');
+            const courses = await res.json();
+            allCourses = courses.filter(c => c.active !== false);
+            renderCourses();
+            await checkExistingStudentMode();
+        } catch (err) { document.getElementById('coursesGrid').innerHTML = `<div class="text-center text-red-500 col-span-full">Failed to load courses</div>`; }
+    }
+
+    function renderCourses() {
+        const container = document.getElementById('coursesGrid');
+        if (allCourses.length === 0) { container.innerHTML = '<div class="text-center text-gray-400 col-span-full">No courses available</div>'; return; }
+        container.innerHTML = allCourses.map(c => `
+            <div class="course-card border rounded-xl p-5 ${selectedCourseId === c.id ? 'selected' : ''}" onclick="selectCourse(${c.id})">
+                <div class="text-xs text-primary font-semibold">${escapeHtml(c.courseCode)}</div>
+                <h3 class="font-bold text-lg my-2">${escapeHtml(c.title)}</h3>
+                <p class="text-gray-500 text-xs mb-2">Lecturers: ${formatLecturers(c.lecturers)}</p>
+                <p class="text-gray-600 text-sm mb-2 line-clamp-2">${escapeHtml(c.description || 'No description available')}</p>
+                <div class="flex justify-between items-center mt-2">
+                    <span class="text-xs text-gray-400">${c.duration || 'Flexible'}</span>
+                    <span class="text-xl font-bold text-primary">${formatMoney(c.price)}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function selectCourse(id) {
+        selectedCourseId = id;
+        selectedCourseData = allCourses.find(c => c.id === id);
+        renderCourses();
+        const nextBtn = document.getElementById('nextStep1');
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('cursor-not-allowed');
+    }
+
+    function updateStep(step) {
+        document.getElementById('step1').classList.add('hidden');
+        document.getElementById('step2').classList.add('hidden');
+        document.getElementById('step3').classList.add('hidden');
+        document.getElementById(`step${step}`).classList.remove('hidden');
+
+        for (let i = 1; i <= 3; i++) {
+            const dot = document.getElementById(`step${i}Dot`);
+            const text = document.getElementById(`step${i}Text`);
+            if (i < step) {
+                dot.className = 'w-8 h-8 rounded-full bg-success-green text-white flex items-center justify-center text-sm font-bold border-2 border-success-green';
+                dot.innerText = '✓';
+                text.className = 'text-success-green font-medium';
+            } else if (i === step) {
+                dot.className = 'w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold border-2 border-primary';
+                dot.innerText = i;
+                text.className = 'text-primary font-medium';
+            } else {
+                dot.className = 'w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold border-2 border-gray-300';
+                dot.innerText = i;
+                text.className = 'text-gray-400';
+            }
+        }
+    }
+
+    document.getElementById('nextStep1')?.addEventListener('click', () => { if (selectedCourseId) updateStep(2); });
+    document.getElementById('prevStep2')?.addEventListener('click', () => updateStep(1));
+    document.getElementById('prevStep3')?.addEventListener('click', () => updateStep(2));
+
+    document.getElementById('nextStep2')?.addEventListener('click', () => {
+        if (existingStudentMode) {
+            // Skip validation for existing student
+            document.getElementById('selectedCourseTitle').innerText = selectedCourseData?.title || '-';
+            document.getElementById('selectedCoursePrice').innerHTML = formatMoney(selectedCourseData?.price || 0);
+            updateStep(3);
+            return;
+        }
+
+        // New student validation
+        const name = document.getElementById('fullName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const pwd = document.getElementById('password').value;
+        const confirm = document.getElementById('confirmPassword').value;
+        const phone = document.getElementById('phoneNumber').value.trim();
+        const age = document.getElementById('age').value;
+
+        if (!name || !email || !pwd || !confirm || !phone || !age) { showToast('Please fill all fields', true); return; }
+        if (!isValidEmail(email)) { showToast('Please enter a valid email', true); return; }
+        if (pwd.length < 6) { showToast('Password must be at least 6 characters', true); return; }
+        if (pwd !== confirm) { showToast('Passwords do not match', true); return; }
+        if (!/^\d{10}$/.test(phone)) { showToast('Phone must be exactly 10 digits', true); return; }
+        if (age < 1 || age > 120) { showToast('Please enter valid age', true); return; }
+
+        document.getElementById('selectedCourseTitle').innerText = selectedCourseData?.title || '-';
+        document.getElementById('selectedCoursePrice').innerHTML = formatMoney(selectedCourseData?.price || 0);
+        updateStep(3);
+    });
+
+    document.getElementById('submitRegister')?.addEventListener('click', async () => {
+        const student = JSON.parse(localStorage.getItem('studentUser') || 'null');
+        const params = new URLSearchParams(window.location.search);
+        const existingStudentId = params.get('studentId');
+
+        // Existing student enrolling in another course
+        if (student && existingStudentId && String(student.id) === String(existingStudentId)) {
+            const payload = {
+                courseId: selectedCourseId,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                cardHolderName: document.getElementById('payerName').value.trim()
+            };
+            if (!payload.cardHolderName) { showToast('Please enter payer name', true); return; }
+            if (!selectedCourseId) { showToast('Please select a course', true); return; }
+
+            try {
+                const res = await fetch(`/api/students/${student.id}/courses/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+                showToast(`✅ Enrolled in ${selectedCourseData?.title}! Transaction: ${data.transactionReference}`);
+                setTimeout(() => { window.location.href = `/dashboard.html`; }, 1500);
+            } catch (err) { showToast(err.message, true); }
+            return;
+        }
+
+        // New student registration
+        const payload = {
+            fullName: document.getElementById('fullName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            password: document.getElementById('password').value,
+            phoneNumber: document.getElementById('phoneNumber').value.trim(),
+            age: parseInt(document.getElementById('age').value),
+            courseId: selectedCourseId,
+            paymentMethod: document.getElementById('paymentMethod').value,
+            cardHolderName: document.getElementById('payerName').value.trim()
+        };
+        if (!payload.cardHolderName) { showToast('Please enter payer name', true); return; }
+        if (!selectedCourseId) { showToast('Please select a course', true); return; }
+
+        try {
+            const res = await fetch('/api/students/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            showToast(`✅ Registration successful! Transaction: ${data.transactionReference}`);
+            setTimeout(() => { window.location.href = `/receipt.html?paymentId=${data.enrollmentId}`; }, 1500);
+        } catch (err) { showToast(err.message, true); }
+    });
+
+    window.selectCourse = selectCourse;
+    loadCourses();
+</script>
+</body>
+</html>
