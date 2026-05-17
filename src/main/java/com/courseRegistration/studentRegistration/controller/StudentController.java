@@ -65,6 +65,9 @@ public class StudentController {
     public Student updateStudentProfile(@PathVariable Long id, @RequestBody StudentProfileUpdateRequest request) {
         return studentService.updateStudentProfile(id, request);
     }
-
-
+    @DeleteMapping("/{id}")
+    public ApiMessage deleteStudent(@PathVariable Long id) {
+        studentService.deleteStudent(id);
+        return new ApiMessage("Student deleted successfully");
+    }
 }
