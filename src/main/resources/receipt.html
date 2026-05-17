@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Receipt - Coursera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#5624d0' }, fontFamily: { sans: ['Inter'] } } } }</script>
+</head>
+<body class="bg-gray-100">
+
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div id="receiptContent" class="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+        <div class="text-center py-12 text-gray-400">Loading receipt...</div>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const paymentId = params.get('paymentId');
+    const formatMoney = (amt) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amt);
+
+    async function loadReceipt() {
+        if (!paymentId) { document.getElementById('receiptContent').innerHTML = '<div class="text-center text-red-500">No payment ID provided</div>'; return; }
+        try {
+            const res = await fetch(`/api/payments/${paymentId}/receipt`);
+            const receipt = await res.json();
+            if (!res.ok) throw new Error(receipt.message);
+            document.getElementById('receiptContent').innerHTML = `
+                <div class="text-center border-b pb-4"><h1 class="text-2xl font-bold text-primary">Coursera</h1><p class="text-gray-500">Payment Receipt</p></div>
+                <div class="my-6 space-y-3">
+                    <div class="flex justify-between"><span class="text-gray-600">Transaction Reference:</span><span class="font-mono font-bold">${receipt.transactionReference}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Amount Paid:</span><span class="text-xl font-bold text-primary">${formatMoney(receipt.amount)}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Payment Method:</span><span>${receipt.paymentMethod}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Card Holder:</span><span>${receipt.cardHolderName}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Status:</span><span class="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-sm">${receipt.status}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Date:</span><span>${new Date(receipt.paidAt).toLocaleString()}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Description:</span><span>${receipt.description}</span></div>
+                </div>
+                <div class="border-t pt-4 text-center"><button onclick="window.print()" class="px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90">Print Receipt</button><a href="/dashboard.html" class="ml-3 px-6 py-2 border rounded-lg hover:bg-gray-50">Back to Dashboard</a></div>
+            `;
+        } catch (err) { document.getElementById('receiptContent').innerHTML = `<div class="text-center text-red-500">${err.message}</div>`; }
+    }
+    loadReceipt();
+</script>
+</body>
+</html>
