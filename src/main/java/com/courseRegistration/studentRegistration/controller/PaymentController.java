@@ -50,10 +50,5 @@ public class PaymentController {
     public PaymentReceiptDTO getReceipt(@PathVariable Long id) {
         return paymentService.generateReceipt(id);
     }
-    // REPLACE the previous code with this (no DTO needed)
-    @PutMapping("/{id}/status")
-    public Payment updatePaymentStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        String status = request.get("status");
-        return paymentService.updatePaymentStatus(id, status);
-    }
+
 }
